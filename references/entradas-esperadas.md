@@ -19,18 +19,16 @@ Os nomes canônicos são os usados em `scripts/*.py`. Obrigatório = sem ele o i
 Um arquivo por data, com a data no nome: `estoque 31.12.2025.xls` (aceita `.xls`, `.xlsx`, `.csv`). O cabeçalho pode estar
 em qualquer uma das 40 primeiras linhas; linha de totais no rodapé é reconhecida e usada para conferir a soma.
 
-**OBRIGATÓRIOS (definidos pelo usuário para os cruzamentos): EAN, DESCRIÇÃO, NCM e VALOR.** Além deles, quantidade e código do
-produto, sem os quais a linha não serve ao cálculo. Coluna obrigatória ausente = erro **bloqueante** do arquivo; linha com
-campo obrigatório ausente/inválido = linha **rejeitada** com motivo (aba "Estoque rejeitadas"), nunca descartada em silêncio.
+**Estrutura adaptativa (decisão do usuário, 01/10/2026): só DESCRIÇÃO e QUANTIDADE são indispensáveis.** EAN, NCM, custo unitário e código são RECOMENDADOS: quando faltam, o produto é identificado pela descrição nas NF-e de compra (`scripts/identificacao_estoque.py`), que fornecem EAN, NCM e CEST. Coluna indispensável ausente = erro **bloqueante**; linha sem descrição ou quantidade = **rejeitada** com motivo (aba "Estoque rejeitadas"), nunca descartada em silêncio; linha com quantidade zero é ignorada; EAN inválido é descartado (identificação pela descrição). Custo em coluna por caixa ("CUSTO CX") marca o estoque como contado em embalagem.
 
 | Campo canônico | Coluna do relatório | Obrig. | Regra de validação |
 |---|---|---|---|
-| `ean` | Código de Barras | **sim** | só dígitos, 8/12/13/14; "SEM GTIN" ou vazio rejeita. DV GTIN inválido = aviso (pode ser etiqueta interna) |
+| `ean` | Código de Barras | recomendado | só dígitos, 8/12/13/14; "SEM GTIN" ou vazio rejeita. DV GTIN inválido = aviso (pode ser etiqueta interna) |
 | `descricao` | Descrição do Produto | **sim** | não vazia |
-| `ncm` | NCM | **sim** | 8 dígitos. O Excel grava NCM como número e perde o zero à esquerda: 7 dígitos é corrigido com aviso (`9021000` → `09021000`) |
-| `valor` | Preço Custo Médio | **sim** | custo unitário médio > 0. Se só houver o total, `valor = total / qtd` |
+| `ncm` | NCM | recomendado | 8 dígitos. O Excel grava NCM como número e perde o zero à esquerda: 7 dígitos é corrigido com aviso (`9021000` → `09021000`) |
+| `valor` | Preço Custo Médio | recomendado | custo unitário médio > 0. Se só houver o total, `valor = total / qtd` |
 | `qtd` | Qtde. | sim | > 0 |
-| `cod_produto` | Produto ID | sim | código interno (Anexo I item 2) |
+| `cod_produto` | Produto ID | opcional (gerado: L<linha>) | código interno (Anexo I item 2) |
 | `valor_total` | Total Preço Custo Médio | não | conferido contra o total do rodapé |
 | `unidade` | Unidade | não | |
 | `grupo_pai`, `grupo_filho` | Grupo pai / filho | não | ajuda a segmentar (ex.: ÉTICO, GENÉRICO, PERFUMARIA) |

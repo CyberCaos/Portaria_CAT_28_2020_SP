@@ -19,7 +19,7 @@ Sem `--instalar` o script só informa o que falta. Para validar: `python -m pyte
 | Item | Descrição |
 |---|---|
 | **XMLs de compra** | O máximo possível de NF-e de **entrada** (emissão de terceiros), em pasta ou `.zip`; zips dentro de zips são abertos. Eventos de cancelamento, se tiver. |
-| **Posições de estoque** | Um arquivo por data, com a data no nome: `estoque 31.12.2025.xls` (também `.xlsx` ou `.csv`). Precisa trazer **EAN, descrição, NCM, valor (custo unitário médio), quantidade e código do produto**. |
+| **Posições de estoque** | Um arquivo por data, com a data no nome: `estoque 31.12.2025.xls` (também `.xlsx` ou `.csv`). Só **descrição e quantidade** são indispensáveis; **EAN, NCM, custo unitário e código** são recomendados (sem eles, a skill identifica o produto pela descrição nas notas de compra). Detalhes em [`O-QUE-ENVIAR.md`](O-QUE-ENVIAR.md). |
 | **Dados da empresa** | Nome, CNPJ e **regime**: `SN` (Simples Nacional) ou `RPA`. Sem o regime o cálculo não começa, porque ele escolhe o Anexo V ou o IV. |
 
 **Qual posição de estoque enviar.** A posição que vale é a do **fim do dia anterior** à data em que o produto saiu da ST. Produtos excluídos em 01/01/2026 usam a posição de 31/12/2025; em 01/04/2026, a de 31/03/2026; e assim por diante (01/07, 01/08, 01/10...). Se faltar a posição de uma data, os itens daquela data ficam sem crédito e o relatório avisa; é só enviar o arquivo e rodar de novo. A skill usa as posições **exatamente como foram enviadas**, mesmo que duas datas tenham conteúdo igual.
@@ -63,7 +63,9 @@ Grava `relatorio_levantamento.pdf` na pasta do cliente.
 
 ### 2.4 (Opcional) Tratar as pendências com evidência
 
-Durante o levantamento a skill pode criar dois arquivos na pasta do cliente:
+Durante o levantamento a skill pode criar três arquivos na pasta do cliente:
+
+- **`identificacao_estoque.csv`**: produtos do estoque (sem EAN/NCM) que a skill não conseguiu identificar pela descrição nas notas. Traz o melhor candidato e a similaridade; preencha `ean` e `ncm` e rode de novo. Quem não for identificado fica fora do crédito.
 
 - **`enquadramento_reducao.csv`**: produtos cuja nota traz **redução de base de cálculo**. A fórmula depende de a redução alcançar ou não a venda ao consumidor final (dispositivo do RICMS/SP). A skill decide sozinha o que a lei e a descrição permitem; os demais ficam sem valor até a análise. Preencha `reducao` (`aplicavel`/`nao_aplicavel`), `dispositivo` e a **evidência** (tipo, fonte, apresentação confirmada, vigência) e rode o levantamento de novo.
 - **`identidade_cat68.csv`**: mercadorias cuja descrição não corresponde à descrição legal do item da CAT 68. O crédito é somado com uma observação; se a análise concluir que o produto **não é** o item (`confirmado = nao`), ele sai do crédito.

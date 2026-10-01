@@ -92,41 +92,62 @@ def test_layout_real_obrigatorios_e_rodape():
         shutil.rmtree(tmp)
 
 
-def test_linhas_rejeitadas_por_campo_obrigatorio():
+def test_estrutura_adaptativa_so_descricao_e_quantidade_sao_indispensaveis():
+    """EAN, NCM, custo e código ausentes/inválidos não rejeitam: o produto é identificado pela descrição nas notas."""
     tmp = tempfile.mkdtemp()
     try:
         p = os.path.join(tmp, 'estoque 31.12.2025.xlsx')
-        ruins = [
+        linhas = [
             _linha(None, 1, 'SEM EAN', 1, 5.0, 30049099),
             _linha('SEM GTIN', 2, 'EAN TEXTO', 1, 5.0, 30049099),
             _linha('12345', 8, 'EAN CURTO', 1, 5.0, 30049099),
-            _linha('7896015591212', 3, '', 1, 5.0, 30049099),
+            _linha('7896015591212', 3, '', 1, 5.0, 30049099),                 # sem descrição: rejeitada
             _linha('7891317038878', 4, 'NCM CURTO', 1, 5.0, 123),
             _linha('7897074002015', 5, 'SEM VALOR', 1, None, 30049099),
-            _linha('7896094210967', 6, 'VALOR ZERO', 1, 0, 30049099),
+            _linha('7896094210967', 6, 'QTD ZERO', 0, 5.0, 30049099),         # sem saldo: ignorada sem ruído
             _linha('7898040321499', 7, 'OK', 1, 5.0, 30049099),
         ]
-        _xlsx(p, ruins)
+        _xlsx(p, linhas)
         r = E.ler(p, date(2025, 12, 31))
-        assert [x['descricao'] for x in r['linhas']] == ['OK']
-        motivos = ' | '.join(x['motivo'] for x in r['rejeitadas'])
-        for esperado in ('EAN ausente', 'EAN sem dígitos', 'EAN com tamanho inválido', 'Descrição ausente', 'NCM inválido', 'Valor ausente',
-                         'Valor zero/negativo'):
-            assert esperado in motivos, (esperado, motivos)
-        assert len(r['rejeitadas']) == 7 and any('rejeitada' in a for a in r['avisos'])
+        assert [x['descricao'] for x in r['linhas']] == ['SEM EAN', 'EAN TEXTO', 'EAN CURTO', 'NCM CURTO', 'SEM VALOR', 'OK']
+        por = {x['descricao']: x for x in r['linhas']}
+        assert por['EAN TEXTO']['ean'] == '' and por['EAN CURTO']['ean'] == '' and por['NCM CURTO']['ncm'] == ''
+        assert por['SEM VALOR']['valor'] == 0.0 and por['OK']['ean'] == '7898040321499' and por['OK']['ncm'] == '30049099'
+        assert [x['motivo'] for x in r['rejeitadas']] == ['Descrição ausente']
+        assert any('quantidade zero' in a for a in r['avisos'])
     finally:
         shutil.rmtree(tmp)
 
 
-def test_coluna_obrigatoria_ausente_e_bloqueante():
+def test_estoque_so_com_descricao_quantidade_e_custo_por_caixa():
+    """Estrutura do cliente de sorvete: sem EAN, NCM nem código; custo por caixa; total em fórmula; nomes de coluna livres."""
+    tmp = tempfile.mkdtemp()
+    try:
+        p = os.path.join(tmp, 'estoque 30.06.2026.csv')
+        with open(p, 'w', encoding='utf-8') as f:
+            f.write('DESCRIÇÃO DO PRODUTO;CUSTO CX;QTD ;TOTAL R$ ;UNIDADE\n'
+                    'PICOLE LIMAO 24X60ML;189;42;=B2*C2;UN\n'
+                    'PICOLE UVA 24X60ML;189;0;=B3*C3;UN\n')
+        r = E.ler(p, date(2026, 6, 30))
+        assert not r['bloqueantes'] and len(r['linhas']) == 1
+        l = r['linhas'][0]
+        assert l['qtd'] == 42 and l['valor'] == 189 and l['valor_total'] == 7938 and l['embalagem_estoque'] and l['cod_produto'] == 'L2'
+        assert set(r['campos_ausentes']) == {'ean', 'ncm', 'cod_produto'}
+    finally:
+        shutil.rmtree(tmp)
+
+
+def test_coluna_indispensavel_ausente_e_bloqueante():
     tmp = tempfile.mkdtemp()
     try:
         p = os.path.join(tmp, 'estoque 01.01.2026.csv')
-        open(p, 'w', encoding='utf-8').write('cod;descricao;ncm;quantidade;valor\nA1;PRODUTO;30049099;1;5,0\n')
+        with open(p, 'w', encoding='utf-8') as f:
+            f.write('cod;descricao;ncm;valor\nA1;PRODUTO;30049099;5,0\n')
         r = E.ler(p, date(2026, 1, 1))
-        assert r['linhas'] == [] and any('EAN' in b for b in r['bloqueantes']), r['bloqueantes']
+        assert r['linhas'] == [] and r['bloqueantes']                      # sem quantidade não há o que levantar
         q = os.path.join(tmp, 'estoque 02.01.2026.csv')
-        open(q, 'w').write('a;b;c\n1;2;3\n')
+        with open(q, 'w') as f:
+            f.write('a;b;c\n1;2;3\n')
         assert 'Cabeçalho não reconhecido' in E.ler(q, date(2026, 1, 2))['bloqueantes'][0]
     finally:
         shutil.rmtree(tmp)

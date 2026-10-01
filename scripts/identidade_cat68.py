@@ -120,6 +120,16 @@ def e_item_de_medicamento(desc_legal: str) -> bool:
     return d.startswith('MEDICAMENTOS') or d.startswith('OUTROS TIPOS DE MEDICAMENTOS')
 
 
+def _n_itens_do_ncm(ncm: str) -> int:
+    """Itens da CAT 68 (revogados e vigentes) que o NCM alcança por prefixo."""
+    achados = set()
+    for idx in (itens_cat68(), itens_vigentes()):
+        for chave, leg in idx.items():
+            if any(_dig(t) and ncm.startswith(_dig(t)) for t in str(leg.get('ncm', '')).split()):
+                achados.add(chave)
+    return len(achados)
+
+
 def avaliar(produto: dict, anexo: str, item: str, vigente: bool = False) -> dict:
     """produto: {descricao, ncm, cest, cest_origem}. Devolve {confirmada, evidencias, motivo, descricao_legal, ato, data_revogacao,
     situacao_cest}. Com vigente=True o item é um dos que continuam na ST (serve para comparar a descrição)."""
@@ -142,6 +152,12 @@ def avaliar(produto: dict, anexo: str, item: str, vigente: bool = False) -> dict
         pontos = len(comuns)
         if compat:
             evid.append('termo da descrição legal na descrição do produto: ' + ', '.join(comuns[:4]))
+    # NCM específico do item (subposição de 6+ dígitos, ex.: 2105.00 = sorvetes) identifica o produto por si; NCM de capítulo/posição
+    # (4 dígitos) não: ali a descrição decide
+    esp = max((len(_dig(t)) for t in str(leg.get('ncm', '')).split() if _dig(t) and ncm.startswith(_dig(t))), default=0)
+    if not compat and esp >= 6 and _n_itens_do_ncm(ncm) == 1:           # só quando nenhum outro item da CAT 68 alcança o mesmo NCM
+        compat = True
+        evid.append(f'NCM {ncm} específico do item (subposição de {esp} dígitos)')
     cest_item, cest_prod = _dig(leg.get('cest')), _dig(produto.get('cest'))
     origem = produto.get('cest_origem', '')
     if cest_prod and origem != 'nfe_ean_ambiguo':

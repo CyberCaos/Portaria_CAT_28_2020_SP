@@ -34,7 +34,7 @@ Para **qualquer empresa paulista com estoque de produtos que saíram da ST**: va
 ## O que enviar
 
 1. **Pasta (ou .zip) com os XMLs das notas de compra**: quanto mais notas, melhor o cruzamento.
-2. **Relatório com a posição de estoque**, um arquivo por data (`estoque 31.12.2025.xls`), com os campos **EAN, descrição do produto, NCM, quantidade, custo unitário médio e código do produto**.
+2. **Relatório com a posição de estoque**, um arquivo por data (`estoque 31.12.2025.xls`). Só **descrição e quantidade** são indispensáveis; **EAN, NCM, custo unitário e código** tornam o cruzamento mais seguro. Sem EAN/NCM, a skill identifica o produto pela descrição nas notas de compra. Aceita estruturas diferentes (custo por caixa, nomes de colunas livres, totais em fórmula).
 3. **Razão social, CNPJ e regime** (Simples Nacional ou RPA).
 
 O detalhe de cada campo e dicas de preenchimento estão em [`docs/O-QUE-ENVIAR.md`](docs/O-QUE-ENVIAR.md), que também serve de roteiro para pedir os arquivos ao cliente.
@@ -127,7 +127,7 @@ Copie esta pasta (`credito-icms-estoque-st`) para o diretório de skills do Clau
 ## Limites conhecidos
 
 - Cobre **São Paulo** (CAT 28/2020 e CAT 68/2019). A base de produtos revogados é versionada em `references/base-legal`; antes de fechar um levantamento, confira se saiu ato novo.
-- Layout de estoque validado com o relatório "Posição de Estoque" de um sistema de drogaria; outros ERPs podem exigir ajuste de colunas.
+- A leitura do estoque é adaptativa (nomes de coluna livres, sem EAN/NCM, custo por caixa), mas a identificação **pela descrição** só funciona quando o produto tem nota de compra com nome parecido; o que não for identificado com segurança fica fora do crédito e vai para `identificacao_estoque.csv`.
 - **Qualquer segmento, com ressalvas.** A triagem pela CAT 68, a alocação das notas e as fórmulas valem para os 18 anexos. O casamento **por descrição** (quando o EAN não aparece nas notas) foi calibrado com produtos de farmácia e perfumaria; nos demais segmentos o casamento pelo **EAN** é o caminho principal, e o que não casa com segurança fica fora do crédito, com o motivo registrado. O enquadramento automático da redução de base de cálculo cobre só os medicamentos do art. 3º, XXIV do Anexo II do RICMS/SP; reduções de outros segmentos vão para análise com evidência (`enquadramento_reducao.csv`).
 - Algumas leituras da portaria são **interpretações registradas** (piso zero por mercadoria, valor da mercadoria líquido de desconto, FCP com base própria, analogias do Anexo IV, parcela do art. 3º, §4º / CAT 75/08 não deduzida). Elas estão na seção "Pontos de atenção" do PDF.
 

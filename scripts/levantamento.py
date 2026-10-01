@@ -23,6 +23,7 @@ import alocacao as A  # noqa: E402
 import credito as CR  # noqa: E402
 import enquadramento_auto as EA  # noqa: E402
 import identidade_cat68 as ID  # noqa: E402
+import identificacao_estoque as IE  # noqa: E402
 import fator_conversao as F  # noqa: E402
 import localizar as L  # noqa: E402
 import resultado_modelo as RM  # noqa: E402
@@ -57,6 +58,10 @@ def carregar(pasta: str):
     rel = os.path.join(pasta, 'relatorio_parser')
     compras = _ler_csv(os.path.join(rel, 'compras.csv'))
     campos = list(compras[0].keys()) if compras else []
+    n_fora = 0
+    if compras and 'papel_empresa' in campos and any(c['papel_empresa'] == 'entrada' for c in compras):
+        n_fora = sum(1 for c in compras if c['papel_empresa'] != 'entrada')             # saídas da própria empresa e notas de terceiros
+        compras = [c for c in compras if c['papel_empresa'] == 'entrada']
     faltam = [c for c in OBRIGATORIAS_COMPRAS if compras and c not in campos]
     if faltam:
         raise ValueError(f'compras.csv sem as colunas fiscais {faltam}: gerado por versão antiga do parser. '
@@ -73,6 +78,7 @@ def carregar(pasta: str):
         cli = json.load(f)
     with open(os.path.join(rel, 'intake_resumo.json'), encoding='utf-8') as f:
         resumo = json.load(f)
+    resumo['itens_fora_das_compras'] = n_fora
     return compras, campos, estoque, cli, resumo
 
 
@@ -198,7 +204,7 @@ def _aplicar_enquadramento(compras, regras, auto_ant=None, regime=''):
             elif auto:
                 valor, carga = auto['reducao'], auto.get('carga')
                 fonte_enq, disp = 'automatico', auto['dispositivo']
-                evid_ok, evid_falta = True, ''                      # princípio ativo escrito, NCM, UF e vigência conferidos
+                evid_ok, evid_falta = True, ''                      # identificação (princípio ativo escrito ou NCM do sorvete), UF e vigência conferidos
                 c['_enq_auto'] = auto
                 c['_enq_divergente'] = auto.get('divergente', False)
         if valor:
@@ -235,7 +241,7 @@ def _gravar_enquadramento(pasta, linhas_arquivo, itens_calc, compras, resultados
             novas.append(dict(tipo=chave[0], codigo=chave[1], descricao=cm.get('descricao', ''), ncm=cm.get('ncm', ''), cest=cm.get('cest', ''),
                               p_red_bc=f"{l['p_red_efetivo']:g}", origem_reducao=l.get('p_red_origem', ''),
                               reducao=ROTULO_ENQ.get(auto['reducao'], '') if auto else '', dispositivo=auto['dispositivo'] if auto else '',
-                              evidencia_tipo='descricao_principio_ativo' if auto else '',
+                              evidencia_tipo=auto.get('evidencia_tipo', 'descricao_principio_ativo') if auto else '',
                               evidencia_fonte=f"descrição da NF-e {cm.get('chave_nfe', '')} item {cm.get('n_item', '')}: {cm.get('descricao', '')}" if auto else '',
                               apresentacao_confirmada='sim' if auto else '', vigencia_condicoes='sim' if auto else '',
                               justificativa=auto['justificativa'] if auto else '', fonte=FONTE_AUTO if auto else '',
@@ -371,6 +377,9 @@ def levantar(pasta: str, progresso=None) -> dict:
     linhas_enq, regras_enq, auto_ant = _carregar_enquadramento(pasta)
     _aplicar_enquadramento(compras, regras_enq, auto_ant, cli.get('regime', ''))
     tri, loc = T.Triagem(), L.Localizador(compras)
+    de_para = IE.carregar_de_para(pasta)
+    ident = IE.enriquecer(estoque, loc, compras, de_para)     # estoque sem EAN/NCM: identificado pela descrição nas notas
+    arq_ident = IE.gravar_pendentes(pasta, estoque, de_para)  # o que não identificou vai para identificacao_estoque.csv
     por_data = defaultdict(list)
     for e in estoque:
         por_data[_data(e['data_posicao'])].append(e)
@@ -392,6 +401,10 @@ def levantar(pasta: str, progresso=None) -> dict:
         itens = por_data[pos]
         classificados = []
         for e in itens:
+            if not e.get('ncm'):                               # sem NCM no estoque e sem nota que o identifique pela descrição
+                pendencia('Produto não identificado', 'Alerta', pos, e, 'Sem NCM no estoque e sem nota de compra com descrição equivalente: '
+                          + str(e.get('ident_obs') or ''), f'Informar EAN/NCM em {IE.ARQUIVO} (ou no relatório de estoque) ou enviar a nota de compra do produto')
+                continue
             c = tri.classificar(e['ncm'], e.get('cest', ''), e.get('descricao', ''), e.get('cest_origem', ''))
             classificados.append((e, c))
             if c['status'] == 'ambiguo':
@@ -412,7 +425,7 @@ def levantar(pasta: str, progresso=None) -> dict:
         for it in part['por_posicao'][pos]:
             e, c = it['_e'], it
             item = dict(ean=e['ean'], descricao=e['descricao'], ncm=e['ncm'], qtd=e['qtd'], valor=e['valor'],
-                        aliq_totalizador=e['aliq_totalizador'])
+                        aliq_totalizador=e['aliq_totalizador'], ident_por=e.get('ident_por', ''), ident_nivel=e.get('ident_nivel', ''))
             triagem_rows.append([_fmt(pos), e['ean'], e['descricao'], e['ncm'], e['qtd'], e['valor'], round(e['valor_total'], 2),
                                  c['anexo'], c['segmento'], c['item'], c['criterio'], 'sim' if c['cest_confirma'] else '', _fmt(c['data_revogacao']), e.get('cest', ''),
                                  e.get('cest_origem', ''), c['ato'], '; '.join(c['flags'])])
@@ -427,6 +440,9 @@ def levantar(pasta: str, progresso=None) -> dict:
     consumo = {}
     for t in trabalho:
         t['primeiro'] = loc.localizar(t['item'])
+        if str(t['item'].get('ident_por', '')).startswith('descrição'):       # EAN veio da nota pela descrição: a prova é a descrição, não o EAN
+            t['primeiro'] = dict(t['primeiro'], metodo='descricao', nivel=t['item']['ident_nivel'], ambiguo=False,
+                                 observacoes=list(t['primeiro'].get('observacoes') or []) + ['produto identificado pela descrição nas notas'])
         t['rank'] = _rank_evidencia(t['primeiro'])
     fila = sorted(trabalho, key=lambda t: (t['rank'], t['ordem']))       # prova mais forte escolhe as notas primeiro
     for t in fila:
@@ -562,9 +578,12 @@ def _aplicar_credito(itens_calc, regime, pend, regras_ident=None):
             ident_pend.append(dict(ean=e['ean'], descricao=e['descricao'], ncm=e['ncm'], cest=e.get('cest', ''), anexo=c.get('anexo', ''),
                                    item=c.get('item', ''), descricao_legal=tri_av.get('descricao_legal', ''), motivo=tri_motivo,
                                    sugestao='; '.join(tri_av.get('evidencias', []))))
-        motivos = list(cons['motivos']) + ([tri_motivo] if (tri_motivo and linhas and tri_sit == 'nao_confirmada') else [])
+        ident_obs = ('produto identificado pela descrição nas notas (estoque sem EAN/NCM): confira o casamento na trilha'
+                     if str(item.get('ident_por', '')).startswith('descrição') and linhas else '')
+        motivos = list(cons['motivos']) + ([tri_motivo] if (tri_motivo and linhas and tri_sit == 'nao_confirmada') else []) + \
+            ([ident_obs] if ident_obs else [])
         # todo crédito calculado entra no total unificado; as ressalvas (motivos) viajam como observação do cálculo
-        com_ressalva = bool(linhas) and (not cons['definitivo'] or not tri_ok)
+        com_ressalva = bool(linhas) and (not cons['definitivo'] or not tri_ok or bool(ident_obs))
         definitivo = bool(linhas) and tri_sit != 'excluida' and not (cons['pendente'] and cons['credito'] == 0)
         for l, r in zip(linhas, res):
             alts = '; '.join(f'{k}: {_brl(v)}' for k, v in (r.get('alternativas') or {}).items())

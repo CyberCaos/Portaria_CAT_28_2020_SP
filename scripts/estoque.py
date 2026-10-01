@@ -22,9 +22,11 @@ from typing import Dict, List, Optional, Tuple
 EXT = ('.xlsx', '.xlsm', '.xls', '.csv')
 _DATA_NOME = re.compile(r'(?<!\d)(\d{2})[.\-_/ ](\d{2})[.\-_/ ](\d{4})(?!\d)')
 
-# Campos que o usuário exige na planilha (nomes canônicos). 'valor' = custo unitário médio.
-OBRIGATORIOS = ('ean', 'descricao', 'ncm', 'valor')
-ESSENCIAIS = ('qtd', 'cod_produto')       # sem eles a linha não serve para o cálculo
+# Estrutura ADAPTATIVA: só descrição e quantidade são indispensáveis. EAN, NCM, custo e código são RECOMENDADOS: quando faltam,
+# o produto é identificado pela descrição nas NF-e de compra (identificacao_estoque.py), que fornecem EAN, NCM e CEST.
+OBRIGATORIOS = ('descricao',)
+ESSENCIAIS = ('qtd',)                     # sem eles a linha não serve para o cálculo
+RECOMENDADOS = ('ean', 'ncm', 'valor', 'cod_produto')
 ROTULO = {'ean': 'EAN (Código de Barras)', 'descricao': 'Descrição', 'ncm': 'NCM', 'valor': 'Valor (Preço Custo Médio)',
           'qtd': 'Quantidade', 'cod_produto': 'Código do produto (Produto ID)'}
 
@@ -40,8 +42,10 @@ APELIDOS: Dict[str, List[str]] = {
             'qtde estoque', 'saldo atual', 'quantidade estoque'],
     'unidade': ['unidade', 'un', 'und', 'unid', 'um', 'u m', 'unidade medida'],
     'valor': ['preco custo medio', 'custo medio', 'custo unitario', 'custo', 'preco custo', 'valor unitario',
-              'vl unitario', 'valor'],
-    'valor_total': ['total preco custo medio', 'valor total', 'custo total', 'total custo', 'vl total', 'valor estoque'],
+              'vl unitario', 'valor', 'custo cx', 'custo caixa', 'custo da caixa', 'custo emb', 'custo embalagem', 'custo un',
+              'custo unit', 'preco unitario', 'preco', 'vl custo', 'valor custo'],
+    'valor_total': ['total preco custo medio', 'valor total', 'custo total', 'total custo', 'vl total', 'valor estoque',
+                    'total r', 'total', 'total estoque'],
     'preco_venda': ['preco venda', 'preco de venda', 'venda'],
     'total_venda': ['total preco venda', 'total venda', 'valor venda total'],
     'grupo_pai': ['grupo pai', 'grupo', 'categoria'],
@@ -164,6 +168,21 @@ def _mapear_cabecalho(linha) -> Dict[str, int]:
                     break
             if campo in mapa:
                 break
+    # 3ª passada (estruturas diferentes): palavra-chave no nome da coluna, só para o que ainda não foi mapeado
+    chaves = {'ean': ('ean', 'gtin', 'barra'), 'ncm': ('ncm',), 'cest': ('cest',), 'unidade': ('unidade', 'medida'),
+              'valor': ('custo', 'preco unit', 'vl unit', 'valor unit'), 'cod_produto': ('cod', 'sku', 'referencia'),
+              'qtd': ('qtd', 'quant', 'saldo', 'estoque'), 'descricao': ('descri', 'produto', 'nome', 'item')}
+    for campo, cs in chaves.items():
+        if campo in mapa:
+            continue
+        for j, n in enumerate(normas):
+            if j in usados or not n:
+                continue
+            if any(c in n for c in cs) and 'total' not in n and not (campo == 'cod_produto' and ('descri' in n or 'ean' in n or 'barra' in n)) \
+                    and not (campo == 'valor' and ('venda' in n)) and not (campo == 'qtd' and 'valor' in n):
+                mapa[campo] = j
+                usados.add(j)
+                break
     return mapa
 
 
@@ -228,11 +247,19 @@ def ler(caminho: str, data_posicao: Optional[date]) -> dict:
     base['colunas'] = {k: str(cab[v]) for k, v in mapa.items()}
     base['nao_reconhecidas'] = [str(c) for j, c in enumerate(cab) if j not in mapa.values() and not _vazio(c)]
 
-    # 'valor' pode ser derivado de valor_total/qtd quando só o total existir
-    falta = [c for c in OBRIGATORIOS + ESSENCIAIS
-             if c not in mapa and not (c == 'valor' and 'valor_total' in mapa)]
+    falta = [c for c in OBRIGATORIOS + ESSENCIAIS if c not in mapa]
     for c in falta:
         base['bloqueantes'].append(f'Coluna obrigatória ausente: {ROTULO[c]}.')
+    ausentes = [c for c in RECOMENDADOS if c not in mapa and not (c == 'valor' and 'valor_total' in mapa)]
+    base['campos_ausentes'] = ausentes
+    if ausentes and not falta:
+        base['avisos'].append('Arquivo sem as colunas ' + ', '.join(ROTULO[c] for c in ausentes) + ': os produtos serão identificados pela '
+                              'descrição nas NF-e de compra (EAN, NCM e CEST vêm da nota). Com EAN e NCM no estoque o cruzamento é mais seguro.')
+    cab_valor = _norm(base['colunas'].get('valor', ''))
+    em_embalagem = bool(re.search(r'\b(cx|caixa|emb|embalagem|fardo|fd|pct|pacote)\b', cab_valor))
+    if em_embalagem:
+        base['avisos'].append(f"Custo informado por embalagem (coluna '{base['colunas']['valor']}'): a quantidade do estoque é lida na mesma "
+                              'unidade (caixa); o fator de conversão é conferido pelo preço das notas.')
     if data_posicao is None:
         base['avisos'].append('Data da posição não encontrada no nome do arquivo (esperado "estoque dd.mm.aaaa").')
     if 'cest' not in mapa:
@@ -243,6 +270,7 @@ def ler(caminho: str, data_posicao: Optional[date]) -> dict:
 
     g = lambda lin, k: (lin[mapa[k]] if k in mapa and mapa[k] < len(lin) else None)
     ncm_corrigidos = 0
+    zeradas = sem_valor = ean_invalidos = 0
     vistos: Dict[str, int] = {}
     for n, lin in enumerate(linhas[cab_idx + 1:], start=cab_idx + 2):
         if not lin or all(_vazio(c) for c in lin):
@@ -263,45 +291,50 @@ def ler(caminho: str, data_posicao: Optional[date]) -> dict:
         ean = digitos(ean_raw)
         ncm, av_ncm = normalizar_ncm(g(lin, 'ncm'))
         motivos = []
-        if _vazio(ean_raw):
-            motivos.append('EAN ausente')
-        elif not ean:
-            motivos.append(f'EAN sem dígitos ({str(ean_raw).strip()})')
-        elif len(ean) not in (8, 12, 13, 14):
-            motivos.append(f'EAN com tamanho inválido ({len(ean)} dígitos)')
+        if ean and len(ean) not in (8, 12, 13, 14):          # EAN inválido não rejeita: o produto é identificado pela descrição
+            ean_invalidos += 1
+            ean = ''
+        if len(ncm) != 8:
+            ncm = ''
         if not desc:
             motivos.append('Descrição ausente')
-        if len(ncm) != 8:
-            motivos.append(av_ncm or 'NCM ausente')
-        if valor is None:
-            motivos.append('Valor ausente')
-        elif valor <= 0:
-            motivos.append('Valor zero/negativo')
         if qtd is None:
             motivos.append('Quantidade ausente/ilegível')
-        elif qtd <= 0:
-            motivos.append('Quantidade zero/negativa')
+        elif qtd < 0:
+            motivos.append('Quantidade negativa')
+        elif qtd == 0:                                      # produto sem saldo: não entra, sem ruído
+            zeradas += 1
+            continue
+        if valor is None or valor <= 0:
+            sem_valor += 1
+            valor = 0.0
         if not cod:
-            motivos.append('Código do produto ausente')
+            cod = f'L{n}'
         if motivos:
             base['rejeitadas'].append(dict(linha=n, arquivo=base['arquivo'], ean=str(ean_raw or ''), descricao=desc,
                                            motivo='; '.join(motivos)))
             continue
-        if av_ncm:
+        if av_ncm and av_ncm.startswith('NCM com 7'):
             ncm_corrigidos += 1
         vistos[ean] = vistos.get(ean, 0) + 1
         tot = g(lin, 'totalizador')
         base['linhas'].append(dict(
             data_posicao=data_posicao, arquivo=base['arquivo'], cod_produto=cod, ean=ean, descricao=desc, ncm=ncm,
             cest=digitos(g(lin, 'cest')), qtd=qtd, unidade=str(g(lin, 'unidade') or '').strip(), valor=round(valor, 6),
-            valor_total=round(vtot if vtot is not None else valor * qtd, 2),
+            valor_total=round(vtot if vtot is not None else valor * qtd, 2), embalagem_estoque=em_embalagem,
             grupo_pai=str(g(lin, 'grupo_pai') or '').strip(), cst_icms=str(g(lin, 'cst_icms') or '').strip(),
             totalizador=str(tot or '').strip(), aliq_totalizador=aliquota_totalizador(str(tot or '')),
-            ean_dv_ok=gtin_valido(ean)))
+            ean_dv_ok=gtin_valido(ean) if ean else True))
     if ncm_corrigidos:
         base['avisos'].append(f'{ncm_corrigidos} NCM com 7 dígitos tiveram o zero à esquerda restaurado '
                               '(Excel grava NCM como número).')
-    dup = [e for e, c in vistos.items() if c > 1]
+    if zeradas:
+        base['avisos'].append(f'{zeradas} linha(s) com quantidade zero ignoradas (sem saldo).')
+    if sem_valor:
+        base['avisos'].append(f'{sem_valor} linha(s) sem custo unitário (o crédito usa o valor das notas; o custo só serve de conferência do fator).')
+    if ean_invalidos:
+        base['avisos'].append(f'{ean_invalidos} EAN com tamanho inválido ignorados: identificação pela descrição.')
+    dup = [e for e, c in vistos.items() if c > 1 and e]
     if dup:
         base['avisos'].append(f'{len(dup)} EAN repetidos no mesmo arquivo (a quantidade será somada no cruzamento).')
     dv = sum(1 for l in base['linhas'] if not l['ean_dv_ok'])

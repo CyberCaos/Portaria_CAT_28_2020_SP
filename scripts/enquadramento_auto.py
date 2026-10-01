@@ -12,8 +12,13 @@ dispositivo exige; carga destacada na nota e NCM são indícios, nunca confirma�
   medicamento (3003, 3004, 3006), operação interna em SP e emissão dentro da vigência do inciso. Carga da nota diferente de 7%
   não impede o enquadramento, mas marca a linha como divergente (a linha leva observação do cálculo).
 
-Todo o resto (arts. 34 e 39, demais incisos do art. 3º, redução de fornecedor de outra UF) fica para análise: a descrição do
-produto precisa ser conferida com o dispositivo. A marca conhecida vira só sugestão no arquivo de enquadramento.
+- RICMS/SP Anexo II, art. 39, XIV (sorvetes, NCM 2105.00.10 e 2105.00.90, carga 12%, saída de fabricante ou atacadista; o § 1º exclui
+  a saída a consumidor final e a empresa do Simples Nacional: RC 23159/2021 e RC 29390/2024). O NCM 2105.00 identifica o produto
+  por si (sorvete de qualquer espécie); exige operação interna SP e emissão na vigência. A condição "fabricante ou atacadista" não
+  consta do XML e fica registrada na justificativa. Redução NÃO aplicável ao consumidor final.
+
+Todo o resto (art. 34, demais itens do art. 39, demais incisos do art. 3º, redução de fornecedor de outra UF) fica para análise: a
+descrição do produto precisa ser conferida com o dispositivo. A marca conhecida vira só sugestão no arquivo de enquadramento.
 """
 import csv
 import os
@@ -33,6 +38,10 @@ DISPOSITIVO_XXIV = 'RICMS/SP Anexo II art. 3º XXIV'
 CARGA_XXIV = 7.0
 VIGENCIA_XXIV = (date(2014, 7, 4), date(2026, 12, 31))      # Decreto 60.630/2014 (DOE 04/07/2014) até Decreto 69.207/2024
 NCM_MEDICAMENTO = ('3003', '3004', '3006')
+DISPOSITIVO_39_XIV = 'RICMS/SP Anexo II art. 39 XIV'
+CARGA_39 = 12.0
+VIGENCIA_39 = (date(2014, 1, 1), date(2026, 12, 31))          # Decretos 69.207/2024 e 70.293/2025 (tabela de dispositivos)
+NCM_SORVETE = ('21050010', '21050090')
 # princípio ativo do inciso -> padrões que TODOS precisam aparecer na descrição (condição conjunta para associações)
 PRINCIPIOS_XXIV = [
     ('paracetamol', [r'PARACETAMOL|ACETAMINOFEN']),
@@ -96,12 +105,34 @@ def sugestao_marca(descricao: str) -> str:
     return ''
 
 
+def _classificar_sorvete(c: dict, p: float) -> Optional[dict]:
+    """Art. 39, XIV: sorvetes (NCM 2105.00.10/.90), identificados pelo próprio NCM; carga 12%; não alcança o consumidor final."""
+    if _dig(c.get('ncm')) not in NCM_SORVETE:
+        return None
+    if str(c.get('uf_emitente') or '') != 'SP' or str(c.get('uf_destinatario') or '') != 'SP':
+        return None
+    emissao = _data(c.get('data_emissao'))
+    if not emissao or not (VIGENCIA_39[0] <= emissao <= VIGENCIA_39[1]):
+        return None
+    aliq = float(c.get('p_icms') or 0) or float(c.get('p_icms_st') or 0)
+    carga = aliq * (1 - p / 100) if aliq > 0 else None
+    divergente = carga is None or abs(carga - CARGA_39) > TOLERANCIA_CARGA
+    nota = (f'carga da nota {carga:.2f}% confere com os 12% do dispositivo' if not divergente else
+            f'carga da nota {"desconhecida" if carga is None else f"{carga:.2f}%"} diferente dos 12% do dispositivo (indício contrário: conferir)')
+    return dict(reducao=NAO_APLICAVEL, dispositivo=DISPOSITIVO_39_XIV, carga=CARGA_39, divergente=divergente, evidencia_tipo='descricao_e_classificacao',
+                justificativa=f'automático: {DISPOSITIVO_39_XIV}, sorvete identificado pelo NCM {c.get("ncm")}; operação interna SP, emissão '
+                              f'{emissao.strftime("%d/%m/%Y")} na vigência; {nota}; alcance: o § 1º exclui a saída a consumidor final (redução não aplicável); '
+                              'o benefício é de fabricante ou atacadista (condição não verificável no XML)')
+
+
 def classificar(c: dict, regime: str = '') -> Optional[dict]:
     """c: linha de compra (compras.csv). Devolve {reducao, dispositivo, carga, divergente, justificativa} ou None (análise)."""
     p_st, p_prop = float(c.get('p_red_bc_st') or 0), float(c.get('p_red_bc') or 0)
     tem_st = float(c.get('vbc_st') or 0) > 0
     if not (p_st > 0 or (p_prop > 0 and tem_st)):
         return None
+    if _dig(c.get('ncm')) in NCM_SORVETE:
+        return _classificar_sorvete(c, p_st if p_st > 0 else p_prop)
     if not _dig(c.get('ncm')).startswith(NCM_MEDICAMENTO):
         return None
     if str(c.get('uf_emitente') or '') != 'SP' or str(c.get('uf_destinatario') or '') != 'SP':
