@@ -87,3 +87,7 @@ Copie esta pasta (`credito-icms-estoque-st`) para o diretório de skills do Clau
 - Cobre **São Paulo** (CAT 28/2020 e CAT 68/2019). A base de produtos revogados é versionada em `references/base-legal`; antes de fechar um levantamento, confira se saiu ato novo.
 - Layout de estoque validado com o relatório "Posição de Estoque" de uma drogaria; outros ERPs podem exigir ajuste de colunas.
 - Algumas leituras da portaria são **interpretações registradas** (piso zero por mercadoria, valor da mercadoria líquido de desconto, FCP com base própria, analogias do Anexo IV, parcela do art. 3º, §4º / CAT 75/08 não deduzida). Elas estão na seção "Pontos de atenção" do PDF.
+
+## Licença
+
+Código sob licença [MIT](LICENSE). A skill é uma ferramenta de apoio: o uso dos resultados e a responsabilidade pelo crédito apurado são do contribuinte e do seu contador.
