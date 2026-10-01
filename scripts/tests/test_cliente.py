@@ -22,7 +22,7 @@ CFE_PROPRIO = ('<CFe><infCFe><ide><dEmi>20260115</dEmi></ide><emit><CNPJ>%s</CNP
 
 
 def test_nome_pasta():
-    assert PC.nome_pasta('DROGARIA EXEMPLO LTDA') == 'DROGARIA EXEMPLO LTDA'
+    assert PC.nome_pasta('COMERCIAL EXEMPLO LTDA') == 'COMERCIAL EXEMPLO LTDA'
     assert PC.nome_pasta('A/B: "C"?  LTDA.') == 'A B C LTDA'
 
 

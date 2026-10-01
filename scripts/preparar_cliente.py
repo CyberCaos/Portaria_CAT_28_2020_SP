@@ -10,7 +10,7 @@
 Os XMLs originais NÃO são copiados (são grandes e já estão na origem); fica registrado de onde vieram.
 
 Uso:
-    python scripts/preparar_cliente.py --cliente "DROGARIA EXEMPLO LTDA" --cnpj 33.333.333/0001-33 \\
+    python scripts/preparar_cliente.py --cliente "COMERCIAL EXEMPLO LTDA" --cnpj 33.333.333/0001-33 \\
         --pacote <zip|pasta com XML + ESTOQUE> --saida <pasta_base> [--regime RPA|SN] [--xml-proprios <pasta>] [--zip]
     (alternativa: --xml <pasta|zip> ... --estoque <arquivo|pasta|zip> ...)
 
