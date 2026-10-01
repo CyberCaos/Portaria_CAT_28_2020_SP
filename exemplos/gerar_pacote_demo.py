@@ -6,29 +6,31 @@ Nenhum dado é real: empresa, fornecedores, CNPJs, chaves e produtos são invent
 import os
 import sys
 
-EMPRESA = ('DROGARIA EXEMPLO LTDA', '33333333000133')
+EMPRESA = ('COMERCIAL EXEMPLO LTDA', '33333333000133')
 FORNECEDORES = {
     'A': ('DISTRIBUIDORA ALFA FICTICIA LTDA', '11111111000111', 'SP'),
     'B': ('LABORATORIO BETA FICTICIO S/A', '22222222000122', 'SP'),
     'C': ('COMERCIAL GAMA FICTICIA ME', '44444444000144', 'SP'),            # Simples Nacional (CRT 1, CSOSN)
 }
 
-# produto: (ean, descricao, ncm, cest, un, qtd_estoque, custo_estoque)
+# produto: (ean, descricao, ncm, cest, custo_unit_estoque, qtd_estoque) - segmentos variados da CAT 68/2019
 PRODUTOS = {
-    'dipirona': ('7890000000015', 'DIPIRONA SODICA 500MG C/10 COMP', '30049099', '1300100', 3.00, 40),
-    'losartana': ('7890000000022', 'LOSARTANA POTASSICA 50MG C/30 COMP', '30049069', '1300100', 8.00, 25),
-    'paracetamol': ('7890000000039', 'PARACETAMOL 750MG C/20 COMP', '30049069', '1300100', 6.00, 30),
-    'mamadeira': ('7890000000046', 'MAMADEIRA BICO DE SILICONE 240ML', '39241000', '', 14.00, 12),
-    'shampoo': ('7890000000053', 'SHAMPOO ANTICASPA 400ML', '33051000', '', 11.00, 18),
+    'dipirona': ('7890000000015', 'DIPIRONA SODICA 500MG C/10 COMP', '30049099', '1300100', 3.00, 40),         # Anexo IX (medicamentos)
+    'lampada': ('7890000000022', 'LAMPADA LED BULBO 9W BIVOLT', '85395200', '0900100', 7.00, 60),               # Anexo XV (lampadas)
+    'suco': ('7890000000039', 'SUCO DE UVA INTEGRAL 1L', '20096100', '1701000', 9.00, 48),                      # Anexo XVI, parcial (NCM+CEST)
+    'shampoo': ('7890000000046', 'SHAMPOO ANTICASPA 400ML', '33051000', '', 11.00, 18),                         # Anexo XI, sem CEST: descricao
+    'tinta': ('7890000000053', 'TINTA ACRILICA FOSCA BRANCA 18L', '32091010', '2400100', 180.00, 10),           # Anexo VIII (tintas)
+    'pneu': ('7890000000060', 'PNEU NOVO ARO 15 195/60R15', '40111000', '1600100', 320.00, 8),                  # Anexo VII (pneus)
 }
 
 # nota: (numero, data, fornecedor, [(produto, qtd, vUnCom, tipo_icms)])
 # tipos: 'ST_FORN' (CST 10, ST retida na nota), 'ST_RET' (CST 60, ST retida anteriormente), 'SN_RET' (CSOSN 500)
 NOTAS = [
-    (1001, '2025-11-10', 'A', [('dipirona', 60, 3.00, 'ST_RET'), ('losartana', 30, 8.00, 'ST_RET'), ('mamadeira', 12, 14.00, 'ST_RET')]),
+    (1001, '2025-11-10', 'A', [('dipirona', 60, 3.00, 'ST_RET'), ('lampada', 80, 7.00, 'ST_RET'), ('suco', 60, 9.00, 'ST_RET')]),
     (1002, '2025-12-02', 'A', [('dipirona', 50, 3.20, 'ST_RET'), ('shampoo', 20, 11.00, 'ST_RET')]),
-    (1003, '2025-12-12', 'B', [('paracetamol', 40, 6.00, 'ST_FORN'), ('losartana', 10, 8.20, 'ST_FORN')]),
+    (1003, '2025-12-12', 'B', [('suco', 24, 9.50, 'ST_FORN'), ('lampada', 10, 7.30, 'ST_FORN')]),
     (1004, '2025-12-20', 'C', [('shampoo', 10, 11.50, 'SN_RET')]),
+    (1005, '2026-08-15', 'B', [('tinta', 12, 180.00, 'ST_FORN'), ('pneu', 10, 320.00, 'ST_FORN')]),
 ]
 
 
@@ -93,8 +95,8 @@ def main(destino):
             f.write(conteudo)
     cab = 'Código de Barras;Produto ID;Descrição do Produto;Grupo pai;Grupo filho;Qtde.;Preço Custo Médio;Total Preço Custo Médio;NCM;Unidade;Totalizador'
     virg = lambda v: f'{v:.2f}'.replace('.', ',')
-    # duas posições: a de 31/12/2025 serve às exclusões de 01/01/2026 (medicamentos) e a de 31/03/2026 às de 01/04/2026
-    for data, ajuste in (('31.12.2025', 1.0), ('31.03.2026', 0.5)):
+    # três posições: 31/12/2025 serve às exclusões de 01/01/2026, 31/03/2026 às de 01/04/2026 e 30/09/2026 às de 01/10/2026
+    for data, ajuste in (('31.12.2025', 1.0), ('31.03.2026', 0.5), ('30.09.2026', 0.75)):
         linhas = [cab]
         for p, (ean, desc, ncm, cest, custo, qtd) in PRODUTOS.items():
             q = max(1, int(qtd * ajuste))

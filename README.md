@@ -1,10 +1,35 @@
 # Crédito de ICMS sobre estoque excluído da ST (SP) — skill `credito-icms-estoque-st`
 
-Uma skill do Claude que faz, de ponta a ponta, o **levantamento do crédito de ICMS sobre o estoque** de mercadorias que saíram do regime de substituição tributária em São Paulo, conforme a **Portaria CAT 28/2020** (Anexos IV e V) e a relação de produtos revogados da **Portaria CAT 68/2019**.
+Uma skill do Claude que faz, de ponta a ponta, o **levantamento do crédito de ICMS sobre o estoque** de mercadorias de qualquer segmento que saíram do regime de substituição tributária em São Paulo, conforme a **Portaria CAT 28/2020** (Anexos IV e V) e a relação de produtos revogados da **Portaria CAT 68/2019**.
 
 Você entrega as notas de compra (XML) e a posição de estoque. A skill devolve **uma planilha Excel e um relatório em PDF**, com o crédito por item, a nota fiscal que o sustenta (chave de acesso e item), a fórmula aplicada e o plano de lançamento (PGDAS-D para o Simples Nacional; 12 parcelas no Bloco E, código SP020750, para o Regime Periódico de Apuração).
 
 > **Aviso.** A skill automatiza a apuração e documenta cada premissa, mas **não substitui a análise do contador ou do advogado tributarista**. O crédito é passível de fiscalização: guarde as notas, o relatório e o fundamento das observações do cálculo. O relatório não comprova a escrituração do Registro de Inventário (Bloco H) nem os lançamentos do crédito.
+
+## Para quais segmentos serve
+
+Para **qualquer empresa paulista com estoque de produtos que saíram da ST**: varejo, atacado, distribuidoras, oficinas e lojas de autopeças, materiais de construção, supermercados, farmácias e outros. A base cobre os 18 anexos da CAT 68/2019:
+
+| Anexo da CAT 68/2019 | Segmento |
+|---|---|
+| III | Cerveja, chope, refrigerante, água e outras bebidas |
+| IV | Sorvete e preparado para fabricação de sorvete |
+| VII | Pneumáticos, câmaras de ar e protetores de borracha |
+| VIII | Tintas, vernizes e outros produtos da indústria química |
+| IX | Medicamentos |
+| X | Bebidas alcoólicas |
+| XI | Produtos de perfumaria e de higiene pessoal |
+| XII | Ração animal |
+| XIII | Produtos de limpeza |
+| XIV | Autopeças |
+| XV | Lâmpadas, reatores e "starter" |
+| XVI | Produtos da indústria alimentícia |
+| XVII | Materiais de construção e congêneres |
+| XVIII | Ferramentas |
+| XIX | Produtos de papelaria e papel |
+| XX | Artefatos de uso doméstico |
+| XXI | Materiais elétricos |
+| XXII | Produtos eletrônicos, eletroeletrônicos e eletrodomésticos |
 
 ## O que ela faz
 
@@ -22,7 +47,7 @@ O crédito é **unificado**: todo valor calculado entra no total. As premissas a
 
 ## Como é o relatório
 
-Os exemplos abaixo usam uma **empresa fictícia** (`DROGARIA EXEMPLO LTDA`) e notas inventadas, geradas por [`exemplos/gerar_pacote_demo.py`](exemplos/gerar_pacote_demo.py). Os arquivos completos estão em [`exemplos/modelo-SN`](exemplos/modelo-SN) e [`exemplos/modelo-RPA`](exemplos/modelo-RPA).
+Os exemplos abaixo usam uma **empresa fictícia**, com produtos de seis segmentos (medicamento, lâmpada, alimento, higiene, tinta e pneu), (`COMERCIAL EXEMPLO LTDA`) e notas inventadas, geradas por [`exemplos/gerar_pacote_demo.py`](exemplos/gerar_pacote_demo.py). Os arquivos completos estão em [`exemplos/modelo-SN`](exemplos/modelo-SN) e [`exemplos/modelo-RPA`](exemplos/modelo-RPA).
 
 ### Simples Nacional (Anexo V)
 
@@ -34,7 +59,7 @@ Os exemplos abaixo usam uma **empresa fictícia** (`DROGARIA EXEMPLO LTDA`) e no
 
 | Resumo | Lançamento em 12 parcelas |
 |---|---|
-| ![Resumo RPA](docs/img/rpa-resumo.png) | ![Parcelas RPA](docs/img/rpa-p2.png) |
+| ![Resumo RPA](docs/img/rpa-resumo.png) | ![Parcelas RPA](docs/img/rpa-competencia.png) |
 
 ### Detalhamento item a item (chave de acesso + item rastreado + crédito)
 
@@ -45,9 +70,9 @@ Os exemplos abaixo usam uma **empresa fictícia** (`DROGARIA EXEMPLO LTDA`) e no
 ```bash
 pip install -r requirements.txt
 python exemplos/gerar_pacote_demo.py            # cria um pacote fictício em exemplos/pacote_demo
-python scripts/preparar_cliente.py --cliente "DROGARIA EXEMPLO LTDA" --cnpj 33.333.333/0001-33 --pacote exemplos/pacote_demo --saida minha_saida --regime SN
-python scripts/levantamento.py "minha_saida/DROGARIA EXEMPLO LTDA"
-python scripts/gerar_relatorio.py "minha_saida/DROGARIA EXEMPLO LTDA"
+python scripts/preparar_cliente.py --cliente "COMERCIAL EXEMPLO LTDA" --cnpj 33.333.333/0001-33 --pacote exemplos/pacote_demo --saida minha_saida --regime SN
+python scripts/levantamento.py "minha_saida/COMERCIAL EXEMPLO LTDA"
+python scripts/gerar_relatorio.py "minha_saida/COMERCIAL EXEMPLO LTDA"
 ```
 
 Com dados reais, troque `--pacote` pela pasta ou zip com os XMLs e as posições de estoque, e use `--regime RPA` ou `SN`. O passo a passo completo, a leitura dos resultados e as perguntas frequentes estão no **[guia de uso](docs/GUIA-DE-USO.md)**.
@@ -85,7 +110,8 @@ Copie esta pasta (`credito-icms-estoque-st`) para o diretório de skills do Clau
 ## Limites conhecidos
 
 - Cobre **São Paulo** (CAT 28/2020 e CAT 68/2019). A base de produtos revogados é versionada em `references/base-legal`; antes de fechar um levantamento, confira se saiu ato novo.
-- Layout de estoque validado com o relatório "Posição de Estoque" de uma drogaria; outros ERPs podem exigir ajuste de colunas.
+- Layout de estoque validado com o relatório "Posição de Estoque" de um sistema de drogaria; outros ERPs podem exigir ajuste de colunas.
+- **Qualquer segmento, com ressalvas.** A triagem pela CAT 68, a alocação das notas e as fórmulas valem para os 18 anexos. O casamento **por descrição** (quando o EAN não aparece nas notas) foi calibrado com produtos de farmácia e perfumaria; nos demais segmentos o casamento pelo **EAN** é o caminho principal, e o que não casa com segurança fica fora do crédito, com o motivo registrado. O enquadramento automático da redução de base de cálculo cobre só os medicamentos do art. 3º, XXIV do Anexo II do RICMS/SP; reduções de outros segmentos vão para análise com evidência (`enquadramento_reducao.csv`).
 - Algumas leituras da portaria são **interpretações registradas** (piso zero por mercadoria, valor da mercadoria líquido de desconto, FCP com base própria, analogias do Anexo IV, parcela do art. 3º, §4º / CAT 75/08 não deduzida). Elas estão na seção "Pontos de atenção" do PDF.
 
 ## Licença

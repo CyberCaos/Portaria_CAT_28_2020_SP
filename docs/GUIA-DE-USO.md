@@ -1,6 +1,6 @@
 # Guia de uso — levantamento de crédito de ICMS sobre estoque (CAT 28/2020)
 
-Este guia leva você do pacote de arquivos ao relatório final. Ele vale para quem usa a skill pelo Claude e para quem roda os scripts direto no terminal.
+Este guia leva você do pacote de arquivos ao relatório final, para qualquer segmento da CAT 68/2019 (medicamentos, bebidas, autopeças, tintas, pneus, materiais de construção, eletrônicos, alimentos, higiene e outros). Ele vale para quem usa a skill pelo Claude e para quem roda os scripts direto no terminal.
 
 ## 0. Instalação
 

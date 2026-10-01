@@ -22,4 +22,4 @@ Gerada por `scripts/preparar_cliente.py`. Uma pasta por cliente, com o nome do c
 
 ## Caso piloto
 
-DROGARIA EXEMPLO LTDA (Simples Nacional; pacote com 2.755 NF-e de terceiros e 3 posições de estoque) foi o cliente de desenvolvimento. Os resultados dele **não** ficam registrados nas referências: mudam a cada ajuste de regra e não servem de gabarito. Para conferir, rode a skill no pacote e compare com a execução anterior.
+Uma drogaria (Simples Nacional; pacote com 2.755 NF-e de terceiros e 3 posições de estoque) foi o cliente de desenvolvimento. Os resultados dele **não** ficam registrados nas referências: mudam a cada ajuste de regra e não servem de gabarito. Para conferir, rode a skill no pacote e compare com a execução anterior.
