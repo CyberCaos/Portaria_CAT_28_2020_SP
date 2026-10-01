@@ -1,0 +1,67 @@
+<nfeProc versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">
+  <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+    <infNFe versao="4.00" Id="NFe31240377250300025455000000143409000183447698">
+      <ide>
+        <cUF>31</cUF>
+        <mod>55</mod>
+        <serie>0</serie>
+        <nNF>143409</nNF>
+        <dEmi>2024-09-02</dEmi>
+        <tpAmb>1</tpAmb>
+      </ide>
+      <emit>
+        <CNPJ>03772503000254</CNPJ>
+        <xNome>CEMED COMERCIO E IMPORTACAO EXPORTACAO E DISTRIBUICAO LTDA</xNome>
+      </emit>
+      <dest>
+        <CNPJ>99999999000191</CNPJ>
+        <xNome>CLIENTE TESTE LTDA</xNome>
+      </dest>
+      <det nItem="1">
+        <prod>
+          <cProd>1001</cProd>
+          <cEAN>SEM GTIN</cEAN>
+          <xProd>PRODUTO SEM ST E SEM IBSCBS</xProd>
+          <NCM>30049099</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>UN</uCom>
+          <qCom>10.0000</qCom>
+          <vUnCom>99.0000000000</vUnCom>
+          <vProd>990.00</vProd>
+          <vFrete>10.00</vFrete>
+          <vSeg>5.00</vSeg>
+          <vOutro>2.00</vOutro>
+          <vDesc>3.00</vDesc>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMS00>
+              <orig>0</orig>
+              <CST>00</CST>
+              <modBC>3</modBC>
+              <vBC>990.00</vBC>
+              <pICMS>18.0000</pICMS>
+              <vICMS>178.20</vICMS>
+            </ICMS00>
+          </ICMS>
+          <PIS>
+            <PISAliq>
+              <CST>01</CST>
+              <vBC>990.00</vBC>
+              <pPIS>1.6500</pPIS>
+              <vPIS>16.34</vPIS>
+            </PISAliq>
+          </PIS>
+          <COFINS>
+            <COFINSAliq>
+              <CST>01</CST>
+              <vBC>990.00</vBC>
+              <pCOFINS>7.6000</pCOFINS>
+              <vCOFINS>75.24</vCOFINS>
+            </COFINSAliq>
+          </COFINS>
+        </imposto>
+      </det>
+    </infNFe>
+  </NFe>
+</nfeProc>

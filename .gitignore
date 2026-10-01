@@ -1,0 +1,21 @@
+# dados de clientes e saidas reais
+clientes/
+simulacoes/
+
+# certificados e segredos
+*.pfx
+*.p12
+*.pem
+*.key
+.env
+
+# python / testes
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# sistema / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

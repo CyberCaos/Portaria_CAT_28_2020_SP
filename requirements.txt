@@ -1,0 +1,7 @@
+# Python 3.10+
+pandas>=2.0
+openpyxl>=3.1
+xlrd>=2.0      # posições de estoque em .xls
+reportlab>=4.0 # PDF
+pytest>=7.0    # testes (python -m pytest scripts/tests -q)
+pymupdf>=1.23  # opcional: conferência visual do PDF

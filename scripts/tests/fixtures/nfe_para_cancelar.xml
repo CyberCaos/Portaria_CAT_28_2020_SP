@@ -1,0 +1,64 @@
+<nfeProc versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">
+  <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+    <infNFe Id="NFe35260629062082000180550010000394151577789420" versao="4.00">
+      <ide>
+        <cUF>35</cUF>
+        <mod>55</mod>
+        <serie>1</serie>
+        <nNF>39415</nNF>
+        <dhEmi>2026-06-16T11:02:15-03:00</dhEmi>
+        <tpAmb>1</tpAmb>
+      </ide>
+      <emit>
+        <CNPJ>29062082000180</CNPJ>
+        <xNome>JPEC EVENTOS E REPRESENTACOES LTDA</xNome>
+      </emit>
+      <dest>
+        <CNPJ>21590391000111</CNPJ>
+        <xNome>NUTRICAR BRASIL COMERCIO DE PRODUTOS ALIMENTICIOS S.A.</xNome>
+      </dest>
+      <det nItem="1">
+        <prod>
+          <cProd>PRD00071</cProd>
+          <cEAN>7898967660299</cEAN>
+          <xProd>BACIO PICOLE COM COBERTURA 18X70GR</xProd>
+          <NCM>21050010</NCM>
+          <CEST>2300100</CEST>
+          <CFOP>5405</CFOP>
+          <uCom>CAIXA</uCom>
+          <qCom>1.0000</qCom>
+          <vUnCom>247.05</vUnCom>
+          <vProd>247.05</vProd>
+          <vDesc>7.41</vDesc>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMS60>
+              <orig>0</orig>
+              <CST>60</CST>
+              <vBCSTRet>375.84</vBCSTRet>
+              <pST>18.0000</pST>
+              <vICMSSTRet>52.23</vICMSSTRet>
+            </ICMS60>
+          </ICMS>
+          <PIS>
+            <PISAliq>
+              <CST>01</CST>
+              <vBC>247.05</vBC>
+              <pPIS>0.65</pPIS>
+              <vPIS>1.61</vPIS>
+            </PISAliq>
+          </PIS>
+          <COFINS>
+            <COFINSAliq>
+              <CST>01</CST>
+              <vBC>247.05</vBC>
+              <pCOFINS>3.00</pCOFINS>
+              <vCOFINS>7.41</vCOFINS>
+            </COFINSAliq>
+          </COFINS>
+        </imposto>
+      </det>
+    </infNFe>
+  </NFe>
+</nfeProc>

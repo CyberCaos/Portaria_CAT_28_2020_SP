@@ -1,0 +1,23 @@
+<nfeProc versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">
+  <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+    <infNFe versao="4.00" Id="NFe31240377250300025455000000143409000183447698">
+      <ide>
+        <cUF>31</cUF>
+        <mod>55</mod>
+        <serie>0</serie>
+        <nNF>143409</nNF>
+        <dEmi>2024-09-02</dEmi>
+        <tpAmb>1</tpAmb>
+      </ide>
+      <emit>
+        <CNPJ>03772503000254</CNPJ>
+        <xNome>CEMED COMERCIO E IMPORTACAO EXPORTACAO E DISTRIBUICAO LTDA</xNome>
+      </emit>
+      <dest>
+        <CNPJ>99999999000191</CNPJ>
+        <xNome>CLIENTE TESTE LTDA</xNome>
+      </dest>
+      <det nItem="1"></det>
+    </infNFe>
+  </NFe>
+</nfeProc>

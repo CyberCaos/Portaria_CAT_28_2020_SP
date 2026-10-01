@@ -1,0 +1,32 @@
+{
+  "fonte": "Portaria CAT 28/2020, Anexo I (tabela A, exclusão da ST) e Anexo II (modelo de relatório)",
+  "colunas_tabela_a": [
+    {"item_anexo_I": 2,  "campo": "cod_mercadoria",        "rotulo": "cod Mercd"},
+    {"item_anexo_I": 3,  "campo": "ncm",                   "rotulo": "cod NCM"},
+    {"item_anexo_I": 3,  "campo": "cest",                  "rotulo": "CEST"},
+    {"item_anexo_I": 4,  "campo": "qtd_estoque",           "rotulo": "qtde em estoque"},
+    {"item_anexo_I": 4,  "campo": "unidade_estoque",       "rotulo": "unidade adotada no estoque"},
+    {"item_anexo_I": 5,  "campo": "aliquota_interna",      "rotulo": "alíquota interna (inclui FCP)"},
+    {"item_anexo_I": 1,  "campo": "chave_nfe",             "rotulo": "chave NFe"},
+    {"item_anexo_I": 6,  "campo": "n_item",                "rotulo": "no. Item"},
+    {"item_anexo_I": 7,  "campo": "qtd_item_comercial",    "rotulo": "qtde do item (unidade comercial)"},
+    {"item_anexo_I": 8,  "campo": "unidade_comercial",     "rotulo": "unidade comercial"},
+    {"item_anexo_I": 8,  "campo": "fator_conversao",       "rotulo": "fator de conversão para unid. de estoque"},
+    {"item_anexo_I": 9,  "campo": "qtd_utilizada_comercial","rotulo": "qtde utilizada do item para informar o estoque"},
+    {"item_anexo_I": 10, "campo": "vl_merc",               "rotulo": "vl Mercd"},
+    {"item_anexo_I": 11, "campo": "bc_st",                 "rotulo": "BC ST"},
+    {"item_anexo_I": 12, "campo": "p_red_bc",              "rotulo": "pRedBc"},
+    {"item_anexo_I": 13, "campo": "credito",               "rotulo": "crédito"}
+  ],
+  "totais_por_mercadoria": [
+    {"item_anexo_I": 14, "campo": "total_vl_merc", "regra": "soma do item 10"},
+    {"item_anexo_I": 15, "campo": "total_bc_st",   "regra": "soma do item 11"},
+    {"item_anexo_I": 16, "campo": "total_credito", "regra": "soma do item 13"}
+  ],
+  "unitarios_por_unidade_de_estoque": [
+    {"item_anexo_I": 17, "campo": "unit_vl_merc", "regra": "item 14 / item 4", "bloco_h": "H010 campo 05"},
+    {"item_anexo_I": 18, "campo": "unit_bc_st",   "regra": "item 15 / item 4", "bloco_h": "H020 campo 03",
+     "nota": "O Anexo I escreve 'item 14 / item 4' também no item 18, mas o valor coerente é item 15 / item 4 (soma da BC ST). Transcrição ambígua do ato: usar item 15."},
+    {"item_anexo_I": 19, "campo": "unit_credito", "regra": "item 16 / item 4", "bloco_h": "H020 campo 04"}
+  ]
+}

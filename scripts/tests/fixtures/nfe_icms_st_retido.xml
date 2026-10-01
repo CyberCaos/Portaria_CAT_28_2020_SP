@@ -1,0 +1,65 @@
+<nfeProc versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">
+  <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+    <infNFe versao="4.00" Id="NFe31240377250300025455000000199999000199999999">
+      <ide>
+        <cUF>31</cUF>
+        <mod>55</mod>
+        <serie>0</serie>
+        <nNF>199999</nNF>
+        <dEmi>2024-10-01</dEmi>
+        <tpAmb>1</tpAmb>
+      </ide>
+      <emit>
+        <CNPJ>03772503000254</CNPJ>
+        <xNome>EMITENTE TESTE</xNome>
+      </emit>
+      <dest>
+        <CNPJ>99999999000191</CNPJ>
+        <xNome>DESTINATARIO TESTE</xNome>
+      </dest>
+      <det nItem="1">
+        <prod>
+          <cProd>3003</cProd>
+          <cEAN>3333333333333</cEAN>
+          <xProd>PRODUTO COM ICMS-ST RETIDO ANTERIORMENTE</xProd>
+          <NCM>30049099</NCM>
+          <CFOP>5405</CFOP>
+          <uCom>UN</uCom>
+          <qCom>5.0000</qCom>
+          <vUnCom>20.0000000000</vUnCom>
+          <vProd>100.00</vProd>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMS60>
+              <orig>0</orig>
+              <CST>60</CST>
+              <vBCSTRet>120.00</vBCSTRet>
+              <pST>18.0000</pST>
+              <vICMSSTRet>21.60</vICMSSTRet>
+              <vBCFCPSTRet>120.00</vBCFCPSTRet>
+              <pFCPSTRet>2.0000</pFCPSTRet>
+              <vFCPSTRet>2.40</vFCPSTRet>
+            </ICMS60>
+          </ICMS>
+          <PIS>
+            <PISAliq>
+              <CST>01</CST>
+              <vBC>100.00</vBC>
+              <pPIS>1.6500</pPIS>
+              <vPIS>1.65</vPIS>
+            </PISAliq>
+          </PIS>
+          <COFINS>
+            <COFINSAliq>
+              <CST>01</CST>
+              <vBC>100.00</vBC>
+              <pCOFINS>7.6000</pCOFINS>
+              <vCOFINS>7.60</vCOFINS>
+            </COFINSAliq>
+          </COFINS>
+        </imposto>
+      </det>
+    </infNFe>
+  </NFe>
+</nfeProc>
