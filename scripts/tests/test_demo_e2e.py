@@ -25,12 +25,12 @@ def _rodar(regime, tmp):
 def test_demo_sn_unificado_e_pdf_sem_classes():
     with tempfile.TemporaryDirectory() as tmp:
         pasta, r = _rodar('SN', tmp)
-        assert r['anexo'] == 'V' and r['credito_total'] == 308.06 and r['mercadorias_definitivas'] == 6   # tudo somado
+        assert r['anexo'] == 'V' and r['credito_total'] == 322.14 and r['mercadorias_definitivas'] == 8   # tudo somado
         pdf = GR.gerar_pdf(pasta)
         texto = ''.join(p.get_text() for p in fitz.open(pdf)).lower()
         assert 'crédito total' in texto and 'interpretativo' not in texto and 'definitivo' not in texto
         res, ponte, destino = REC.reconciliar(pasta, anterior_total=None)
-        assert os.path.exists(destino) and res['atual_total'] == 308.06
+        assert os.path.exists(destino) and res['atual_total'] == 322.14
 
 
 def test_demo_cobre_varios_segmentos_da_cat68():
@@ -38,11 +38,12 @@ def test_demo_cobre_varios_segmentos_da_cat68():
         pasta, r = _rodar('SN', tmp)
         import pandas as pd
         tri = pd.read_excel(os.path.join(pasta, 'relatorio_parser', 'trilha_levantamento.xlsx'), sheet_name='Triagem estoque')
-        assert set(tri['Anexo CAT 68']) == {'IX', 'XV', 'XVI', 'XI', 'VIII', 'VII'}     # medicamento, lâmpada, alimento, higiene, tinta, pneu
-        assert (tri['Critério'] == 'NCM+CEST').sum() == 1                                  # anexo parcial (suco) usa o CEST
+        assert set(tri['Anexo CAT 68']) == {'IX', 'XV', 'XVI', 'XI', 'VIII', 'VII', 'IV', 'XXII'}     # medicamento, lâmpada, alimento, higiene, tinta, pneu, sorvete, eletrodoméstico
+        assert (tri['Critério'] == 'NCM+CEST').sum() == 2                                  # anexos parciais (suco e ferro elétrico) usam o CEST
+        assert 'IMPRESSORA' not in ' '.join(tri['Descrição'])                              # item que continua na ST fica fora
 
 
 def test_demo_rpa_anexo_iv():
     with tempfile.TemporaryDirectory() as tmp:
         pasta, r = _rodar('RPA', tmp)
-        assert r['anexo'] == 'IV' and r['credito_total'] == 1078.19
+        assert r['anexo'] == 'IV' and r['credito_total'] == 1127.46

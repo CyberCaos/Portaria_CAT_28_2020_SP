@@ -154,3 +154,10 @@ Critério de aceite: cada linha reproduzível pelos parâmetros exportados (Anex
 2. Anexo parcial sem CEST: a análise é pela descrição do produto contra a descrição legal do item (`triagem._por_descricao`).
 3. Item em mais de um anexo: a skill escolhe o melhor anexo pela descrição (maior correspondência; empate pelo NCM mais específico e pela data). Se o CEST da nota diverge do item escolhido, a divergência fica registrada.
 4. Sem correspondência de descrição com nenhum item candidato, o item fica fora do crédito (flag na triagem).
+
+## 10. Triagem pela descrição com itens que continuam na ST (01/10/2026)
+
+1. NCM largo em anexo de saída completa (ex.: Anexo IV, preparados para sorvete: 1806, 1901, 2106, 0404; Anexo XXI, 8516) alcança produtos de outros anexos. Quando o NCM alcança **mais de um grupo** (anexo e data de saída, ou item que continua na ST) e o CEST da nota **não confirma** um item, decide a **descrição** do produto contra a descrição legal de todos os candidatos. Um só grupo (ex.: medicamentos, Anexo IX) não passa por essa etapa.
+2. Candidatos incluem os **itens que continuam na ST** (`cat68-2019-itens-vigentes.csv`). Se um deles descreve melhor o produto, ou empata com o melhor item revogado, o produto **segue na ST**: fica fora do levantamento com a pendência informativa "Item que continua na ST" (empate favorece a ST, por prudência).
+3. Casos conferidos: sorvete → Anexo IV item 1; ovo de páscoa (NCM 1806) → Anexo XVI item 6, não o IV; ferro elétrico (NCM 8516.40) → Anexo XXII item 43, não o XXI; secador de cabelo e filtro de água → itens que continuam na ST.
+4. Sem nenhuma correspondência de descrição, vale a triagem pelo NCM (como antes), com as sinalizações de NCM amplo.

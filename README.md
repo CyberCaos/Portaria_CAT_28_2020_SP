@@ -31,6 +31,14 @@ Para **qualquer empresa paulista com estoque de produtos que saíram da ST**: va
 | XXI | Materiais elétricos |
 | XXII | Produtos eletrônicos, eletroeletrônicos e eletrodomésticos |
 
+## O que enviar
+
+1. **Pasta (ou .zip) com os XMLs das notas de compra**: quanto mais notas, melhor o cruzamento.
+2. **Relatório com a posição de estoque**, um arquivo por data (`estoque 31.12.2025.xls`), com os campos **EAN, descrição do produto, NCM, quantidade, custo unitário médio e código do produto**.
+3. **Razão social, CNPJ e regime** (Simples Nacional ou RPA).
+
+O detalhe de cada campo e dicas de preenchimento estão em [`docs/O-QUE-ENVIAR.md`](docs/O-QUE-ENVIAR.md), que também serve de roteiro para pedir os arquivos ao cliente.
+
 ## O que ela faz
 
 | Etapa | O que acontece |
@@ -41,13 +49,14 @@ Para **qualquer empresa paulista com estoque de produtos que saíram da ST**: va
 | 4. Aloca as notas | A quantidade do estoque é suprida por uma ou mais notas, da mais recente para a mais antiga, **só notas anteriores à data da exclusão**. Cada item de nota é usado **uma única vez** em todo o levantamento. |
 | 5. Calcula o crédito | Fórmula do **Anexo V** (Simples Nacional) ou **Anexo IV** (RPA), por item de nota, com base de ST unitária × quantidade em estoque e a alíquota da própria nota. Regime do fornecedor identificado pelo CST/CSOSN do ICMS. |
 | 6. Gera os documentos | `resultado_levantamento.xlsx` (5 abas) e `relatorio_levantamento.pdf` (resumo, memória de cálculo, detalhamento item a item com chave de acesso, pendências). |
+| 0. Panorama (opcional) | `panorama_cat68.py` lista tudo que saiu e vai sair da ST em um ano, por data, anexo e item, e diz quais posições de estoque pedir ao cliente. |
 | 7. Reconcilia | `reconciliar.py` compara duas versões das regras e mostra, por produto e por motivo, por que o total mudou. |
 
 O crédito é **unificado**: todo valor calculado entra no total. As premissas adotadas em parte das linhas (por exemplo, alíquota presumida de 18% quando a nota e o cadastro não trazem a alíquota) aparecem como **observações do cálculo**, já somadas, para você documentar.
 
 ## Como é o relatório
 
-Os exemplos abaixo usam uma **empresa fictícia**, com produtos de seis segmentos (medicamento, lâmpada, alimento, higiene, tinta e pneu), (`COMERCIAL EXEMPLO LTDA`) e notas inventadas, geradas por [`exemplos/gerar_pacote_demo.py`](exemplos/gerar_pacote_demo.py). Os arquivos completos estão em [`exemplos/modelo-SN`](exemplos/modelo-SN) e [`exemplos/modelo-RPA`](exemplos/modelo-RPA).
+Os exemplos abaixo usam uma **empresa fictícia**, com produtos de oito anexos (medicamento, lâmpada, alimento, higiene, sorvete, eletrodoméstico, tinta e pneu) e um item que continua na ST (impressora, que fica fora), (`COMERCIAL EXEMPLO LTDA`) e notas inventadas, geradas por [`exemplos/gerar_pacote_demo.py`](exemplos/gerar_pacote_demo.py). Os arquivos completos estão em [`exemplos/modelo-SN`](exemplos/modelo-SN) e [`exemplos/modelo-RPA`](exemplos/modelo-RPA).
 
 ### Simples Nacional (Anexo V)
 
@@ -64,6 +73,14 @@ Os exemplos abaixo usam uma **empresa fictícia**, com produtos de seis segmento
 ### Detalhamento item a item (chave de acesso + item rastreado + crédito)
 
 ![Detalhe](docs/img/sn-detalhe.png)
+
+## Panorama: o que saiu e o que vai sair da ST em 2026
+
+```bash
+python scripts/panorama_cat68.py --ano 2026 --saida panorama
+```
+
+Gera `panorama_cat68_2026.xlsx` com 5 abas: **Resumo por data** (já saiu / vai sair, ato revogador, anexos e posição de estoque necessária), **Por anexo**, **Itens** (468 itens com NCM, CEST, descrição e critério de triagem), **Posições de estoque** (os arquivos a pedir ao cliente, um por data de saída) e **Ainda na ST** (277 itens que continuam sujeitos à ST). A situação é calculada pela data de hoje. A base cobre cinco datas em 2026 (01/01, 01/04, 01/07, 01/08 e 01/10); não há saída futura registrada depois de 01/10/2026, e a lista deve ser conferida contra atos novos (ver `references/base-legal/README.md`).
 
 ## Começando em 5 minutos
 

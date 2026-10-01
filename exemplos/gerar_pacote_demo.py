@@ -21,6 +21,9 @@ PRODUTOS = {
     'shampoo': ('7890000000046', 'SHAMPOO ANTICASPA 400ML', '33051000', '', 11.00, 18),                         # Anexo XI, sem CEST: descricao
     'tinta': ('7890000000053', 'TINTA ACRILICA FOSCA BRANCA 18L', '32091010', '2400100', 180.00, 10),           # Anexo VIII (tintas)
     'pneu': ('7890000000060', 'PNEU NOVO ARO 15 195/60R15', '40111000', '1600100', 320.00, 8),                  # Anexo VII (pneus)
+    'sorvete': ('7890000000077', 'SORVETE CREMOSO CHOCOLATE 2L', '21050010', '2300100', 18.00, 20),            # Anexo IV (sorvetes)
+    'ferro': ('7890000000084', 'FERRO ELETRICO A VAPOR 1200W', '85164000', '2104400', 65.00, 15),                # Anexo XXII, parcial (NCM+CEST)
+    'impressora': ('7890000000091', 'IMPRESSORA MULTIFUNCIONAL JATO DE TINTA', '84433119', '2101600', 420.00, 4),  # Anexo XXII, item que CONTINUA na ST
 }
 
 # nota: (numero, data, fornecedor, [(produto, qtd, vUnCom, tipo_icms)])
@@ -31,6 +34,8 @@ NOTAS = [
     (1003, '2025-12-12', 'B', [('suco', 24, 9.50, 'ST_FORN'), ('lampada', 10, 7.30, 'ST_FORN')]),
     (1004, '2025-12-20', 'C', [('shampoo', 10, 11.50, 'SN_RET')]),
     (1005, '2026-08-15', 'B', [('tinta', 12, 180.00, 'ST_FORN'), ('pneu', 10, 320.00, 'ST_FORN')]),
+    (1006, '2026-06-10', 'A', [('sorvete', 30, 18.00, 'ST_RET')]),
+    (1007, '2026-07-10', 'B', [('ferro', 20, 65.00, 'ST_FORN'), ('impressora', 6, 420.00, 'ST_FORN')]),
 ]
 
 
@@ -95,8 +100,8 @@ def main(destino):
             f.write(conteudo)
     cab = 'Código de Barras;Produto ID;Descrição do Produto;Grupo pai;Grupo filho;Qtde.;Preço Custo Médio;Total Preço Custo Médio;NCM;Unidade;Totalizador'
     virg = lambda v: f'{v:.2f}'.replace('.', ',')
-    # três posições: 31/12/2025 serve às exclusões de 01/01/2026, 31/03/2026 às de 01/04/2026 e 30/09/2026 às de 01/10/2026
-    for data, ajuste in (('31.12.2025', 1.0), ('31.03.2026', 0.5), ('30.09.2026', 0.75)):
+    # cinco posições, uma por data de saída da ST em 2026 (01/01, 01/04, 01/07, 01/08 e 01/10): cada posição é a do dia anterior
+    for data, ajuste in (('31.12.2025', 1.0), ('31.03.2026', 0.9), ('30.06.2026', 0.8), ('31.07.2026', 0.7), ('30.09.2026', 0.6)):
         linhas = [cab]
         for p, (ean, desc, ncm, cest, custo, qtd) in PRODUTOS.items():
             q = max(1, int(qtd * ajuste))

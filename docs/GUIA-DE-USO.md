@@ -14,6 +14,8 @@ Sem `--instalar` o script só informa o que falta. Para validar: `python -m pyte
 
 ## 1. O que você precisa ter
 
+> Resumo para repassar ao cliente: [`O-QUE-ENVIAR.md`](O-QUE-ENVIAR.md).
+
 | Item | Descrição |
 |---|---|
 | **XMLs de compra** | O máximo possível de NF-e de **entrada** (emissão de terceiros), em pasta ou `.zip`; zips dentro de zips são abertos. Eventos de cancelamento, se tiver. |
@@ -23,6 +25,14 @@ Sem `--instalar` o script só informa o que falta. Para validar: `python -m pyte
 **Qual posição de estoque enviar.** A posição que vale é a do **fim do dia anterior** à data em que o produto saiu da ST. Produtos excluídos em 01/01/2026 usam a posição de 31/12/2025; em 01/04/2026, a de 31/03/2026; e assim por diante (01/07, 01/08, 01/10...). Se faltar a posição de uma data, os itens daquela data ficam sem crédito e o relatório avisa; é só enviar o arquivo e rodar de novo. A skill usa as posições **exatamente como foram enviadas**, mesmo que duas datas tenham conteúdo igual.
 
 ## 2. Passo a passo
+
+### 2.0 (Opcional) Ver o panorama das saídas da ST
+
+```bash
+python scripts/panorama_cat68.py --ano 2026 --saida "C:\clientes\panorama"
+```
+
+Lista tudo que saiu e vai sair da ST no ano e as **posições de estoque** que o cliente precisa enviar (uma por data de saída: 31/12, 31/03, 30/06, 31/07 e 30/09 de 2026, por exemplo). Use a aba "Posições de estoque" como checklist.
 
 ### 2.1 Montar a pasta do cliente
 

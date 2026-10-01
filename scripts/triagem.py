@@ -52,16 +52,23 @@ class Triagem:
         status: 'triado' | 'ambiguo' (mais de um anexo e o CEST não desempata) | 'revisar_parcial_sem_cest' | 'fora'."""
         ncm, cest = _d(ncm), _d(cest)
         r = self._classificar(ncm, cest)
-        if descricao and r['status'] in ('ambiguo', 'revisar_parcial_sem_cest'):
+        if descricao and not r.get('cest_confirma') and (r['status'] in ('ambiguo', 'revisar_parcial_sem_cest') or
+                                                         (r['status'] == 'triado' and self._n_candidatos(ncm) > 1)):
             r = self._por_descricao(ncm, cest, descricao, cest_origem, r)
         return r
+
+    def _n_candidatos(self, ncm):
+        """Grupos distintos que o NCM alcança: (anexo, data de saída) dos itens revogados e anexos dos itens que continuam na ST.
+        Mais de um grupo e sem CEST que confirme = decide a descrição. Um só grupo (ex.: medicamentos, Anexo IX) não tem o que decidir."""
+        return len({('rev', t['anexo'], t['data']) for t in self.tok_rev if ncm.startswith(t['tok'])} |
+                   {('vig', t['anexo']) for t in self.tok_vig if ncm.startswith(t['tok'])})
 
     def _por_descricao(self, ncm, cest, descricao, cest_origem, r):
         """Item em mais de um anexo ou anexo parcial sem CEST: o melhor anexo/item é o da descrição legal que mais corresponde
         à descrição do produto (identidade_cat68). Sem nenhuma correspondência o item continua fora, com o motivo."""
         import identidade_cat68 as ID
         casam = [t for t in self.tok_rev if ncm.startswith(t['tok'])]
-        base = [t for t in casam if t['completo']] if r['status'] == 'ambiguo' else [t for t in casam if not t['completo']]
+        base = casam
         prod = dict(descricao=descricao, ncm=ncm, cest=cest, cest_origem=cest_origem)
         pont = []
         for t in base:
@@ -75,9 +82,24 @@ class Triagem:
                 if av['pontos_desc'] > 0:
                     pont.append((av['pontos_desc'], t, av))
             contradiz = bool(pont)
+        # itens do mesmo NCM que CONTINUAM na ST competem pela descrição: se um deles descreve melhor o produto, ele segue na ST
+        vig = []
+        for t in self.tok_vig:
+            if ncm.startswith(t['tok']):
+                av = ID.avaliar(prod, t['anexo'], t['item'], vigente=True)
+                if av['pontos_desc'] > 0:
+                    vig.append((av['pontos_desc'], t, av))
+        if vig:
+            mv = max(p[0] for p in vig)
+            if not pont or mv >= max(p[0] for p in pont):
+                esc = max(vig, key=lambda p: p[0])
+                return dict(status='vigente', criterio='', anexo=esc[1]['anexo'], item=esc[1]['item'], alternativas=[],
+                            flags=[f"pela descrição, o produto é do item {esc[1]['anexo']}/{esc[1]['item']} ({esc[2]['descricao_legal'][:70]}), "
+                                   'que continua na ST'])
         if not pont:
-            r['flags'] = r['flags'] + ['a descrição do produto não corresponde à descrição legal de nenhum dos itens candidatos']
-            return r
+            if r['status'] != 'triado':
+                r['flags'] = r['flags'] + ['a descrição do produto não corresponde à descrição legal de nenhum dos itens candidatos']
+            return r                                    # sem correspondência de descrição: fica a triagem pelo NCM
         melhor = max(p[0] for p in pont)
         topo = [p for p in pont if p[0] == melhor]
         escolha = self._melhor([p[1] for p in topo])

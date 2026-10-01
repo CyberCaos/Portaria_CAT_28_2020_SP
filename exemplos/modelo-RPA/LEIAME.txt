@@ -3,10 +3,10 @@ Regime: RPA (informado pelo usuário)
 
 estoque/                       posições de estoque recebidas
 relatorio_parser/              entrada_consolidada.xlsx (Resumo, Compras, Estoque, Estoque rejeitadas, Erros XML, Avisos XML, Eventos)
-resultado_levantamento.xlsx    levantamento concluído em 01/10/2026: crédito R$ 1.078,19 (Anexo IV)
+resultado_levantamento.xlsx    levantamento concluído em 01/10/2026: crédito R$ 1.127,46 (Anexo IV)
 relatorio_parser/trilha_levantamento.xlsx  trilha técnica (triagem, localização, alocação, fora do crédito, uso de notas)
 relatorio_levantamento.pdf     relatório (python scripts/gerar_relatorio.py <pasta do cliente>)
 cliente.json                   dados do cliente e resumo da leitura
 
 Alertas da leitura:
-- CEST não resolvido com segurança para 3 de 18 linhas de estoque (3 sem nota com esse EAN, 0 com CEST ambíguo): ficam em revisão no cruzamento com a CAT 68.
+- CEST não resolvido com segurança para 5 de 45 linhas de estoque (5 sem nota com esse EAN, 0 com CEST ambíguo): ficam em revisão no cruzamento com a CAT 68.

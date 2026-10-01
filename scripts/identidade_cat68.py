@@ -86,6 +86,18 @@ def itens_cat68():
     return idx
 
 
+@lru_cache(maxsize=1)
+def itens_vigentes():
+    """Itens que continuam na ST (cat68-2019-itens-vigentes.csv), por (anexo, item)."""
+    with open(CAT68.replace('produtos-revogados', 'itens-vigentes'), encoding='utf-8-sig', newline='') as f:
+        linhas = list(csv.DictReader(f, delimiter=';'))
+    idx = {}
+    for l in linhas:
+        l = {k.replace('\ufeff', ''): v for k, v in l.items()}
+        idx[(l['anexo'].strip(), l['item'].strip())] = l
+    return idx
+
+
 def termos_legais(descricao_legal: str):
     palavras = [w for w in re.findall(r'[A-Z]+', _norm(descricao_legal)) if len(w) >= 4 and w not in PARADAS]
     return sorted({_raiz(w) for w in palavras})
@@ -108,10 +120,10 @@ def e_item_de_medicamento(desc_legal: str) -> bool:
     return d.startswith('MEDICAMENTOS') or d.startswith('OUTROS TIPOS DE MEDICAMENTOS')
 
 
-def avaliar(produto: dict, anexo: str, item: str) -> dict:
+def avaliar(produto: dict, anexo: str, item: str, vigente: bool = False) -> dict:
     """produto: {descricao, ncm, cest, cest_origem}. Devolve {confirmada, evidencias, motivo, descricao_legal, ato, data_revogacao,
-    situacao_cest}."""
-    leg = itens_cat68().get((str(anexo).strip(), str(item).strip()))
+    situacao_cest}. Com vigente=True o item é um dos que continuam na ST (serve para comparar a descrição)."""
+    leg = (itens_vigentes() if vigente else itens_cat68()).get((str(anexo).strip(), str(item).strip()))
     if not leg:
         return dict(confirmada=False, evidencias=[], motivo=f'item {anexo}/{item} não encontrado na tabela da CAT 68', descricao_legal='',
                     ato='', data_revogacao='', situacao_cest='')

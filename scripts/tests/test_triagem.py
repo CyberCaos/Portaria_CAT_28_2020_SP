@@ -90,3 +90,25 @@ def test_descricao_sem_correspondencia_continua_fora():
     tri = T.Triagem()
     r = tri.classificar('39269090', '', 'DISPLAY DE BALCAO 60 PERFUMES')
     assert r['status'] in ('ambiguo', 'revisar_parcial_sem_cest') and any('não corresponde' in f for f in r['flags'])
+
+
+# ---------------------------------------------------------------- sorvete, eletrodomésticos e itens que continuam na ST
+def test_sorvete_anexo_iv_e_preparado_nao_pega_chocolate():
+    tri = T.Triagem()
+    assert tri.classificar('21050010', '', 'SORVETE CREMOSO CHOCOLATE 2L')['anexo'] == 'IV'
+    r = tri.classificar('18069000', '', 'OVO DE PASCOA CHOCOLATE 250G')      # NCM 1806 também está no Anexo IV (preparados para sorvete)
+    assert r['status'] == 'triado' and r['anexo'] == 'XVI' and r['item'] == '6'
+
+
+def test_eletrodomestico_do_anexo_xxii_e_nao_o_xxi_pelo_ncm_amplo():
+    tri = T.Triagem()
+    r = tri.classificar('85164000', '', 'FERRO ELETRICO A VAPOR 1200W')
+    assert r['status'] == 'triado' and (r['anexo'], r['item']) == ('XXII', '43')
+    assert tri.classificar('85164000', '2104400', 'FERRO ELETRICO A VAPOR 1200W')['criterio'] == 'NCM+CEST'
+
+
+def test_item_que_continua_na_st_fica_fora_pela_descricao():
+    tri = T.Triagem()
+    r = tri.classificar('85163100', '', 'SECADOR DE CABELO 2000W')          # Secadores de cabelo: ainda na ST (XXII/103)
+    assert r['status'] == 'vigente' and 'continua na ST' in r['flags'][0]
+    assert tri.classificar('84433119', '2101600', 'IMPRESSORA MULTIFUNCIONAL')['status'] == 'fora'

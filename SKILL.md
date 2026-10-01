@@ -24,7 +24,13 @@ O script exige **Python 3.10+**, confere `pandas`, `openpyxl`, `xlrd` (posiçõe
 - **Crédito unificado** (decisão do usuário, 01/10/2026). Todo crédito calculado pela fórmula do anexo é crédito e entra no **total único** (e no lançamento); não há separação entre definitivo e interpretativo. As premissas adotadas em parte das linhas (analogia, alíquota presumida, percentual da operação própria, base que parece já reduzida, enquadramento por análise, conflito CST × CRT, documento a conferir, identidade a documentar) viajam como **observações do cálculo** (coluna do Anexo II e do Resumo por produto, aba Pendências e seção do PDF), já somadas ao total. Só ficam sem valor: linha sem dado fiscal para a fórmula (pendente), mercadoria que a análise concluiu não ser o item da CAT 68 e item sem nota provada. Critério de aceite: cada linha é reproduzível pelos parâmetros exportados no Anexo II (BC, VlMerc, alíquota, pRedBc e sua origem, enquadramento). Só entra nota **provada** (EAN, ou descrição A/B sem ambiguidade, com fator A/B); o resto sai com o motivo na trilha técnica.
 - **Posição de estoque = a enviada pelo cliente**, na data do nome do arquivo, mesmo que duas datas tenham conteúdo igual. Não peça reexportação nem trate isso como bloqueio. Data de revogação sem posição enviada: os itens dela ficam sem crédito (alerta).
 
+## Panorama das saídas da ST
+
+Para saber **tudo que saiu e vai sair da ST em um ano** (por data, anexo e item) e **quais posições de estoque pedir ao cliente**, rode `python scripts/panorama_cat68.py --ano 2026 --saida <pasta>`: grava `panorama_cat68_2026.xlsx` (Resumo por data, Por anexo, Itens, Posições de estoque, Ainda na ST). A situação (já saiu / sai hoje / vai sair) é calculada pela data de hoje (`--hoje AAAA-MM-DD` para simular). Se não houver saída futura na base, diga isso ao usuário e peça para conferir atos novos (`references/base-legal/README.md`) antes de concluir; não invente datas.
+
 ## Pacote de entrada
+
+Resumo para o cliente (o que enviar, campos do estoque, regime): `docs/O-QUE-ENVIAR.md`. Quando o usuário perguntar o que precisa mandar, responda com esse resumo: **pasta de XMLs de compra + relatório de posição de estoque (um por data) com EAN, descrição, NCM, quantidade, custo unitário médio e código do produto**, mais razão social, CNPJ e regime.
 
 O usuário entrega **uma pasta ou um .zip** (ex.: `CLIENTE/XML/*.xml` e `CLIENTE/ESTOQUE/estoque 31.12.2025.xls`) contendo, em qualquer subpasta:
 
@@ -129,6 +135,7 @@ O arquivo é reescrito a cada rodada: linhas automáticas são refeitas; as pree
 | `references/parser-xml.md` | O que o parser extrai, regras de tolerância, o que não foi portado |
 | `references/lancamento-e-escrituracao.md` | Parcelas, códigos de ajuste, Bloco H, Simples Nacional |
 | `references/base-legal/` | Portarias em HTML/TXT, planilha de produtos revogados, atos revogadores |
+| `scripts/panorama_cat68.py` | Panorama das saídas da ST em um ano (o que saiu, o que sai, posições de estoque a pedir) |
 | `scripts/verificar_ambiente.py` | Confere (e com `--instalar` instala) Python 3.10+ e as dependências do `requirements.txt` |
 | `scripts/preparar_cliente.py` | Monta a pasta do cliente: estoque, relatório do parser, modelo vazio, inferência de regime |
 | `scripts/resultado_modelo.py` | Modelo vazio de `resultado_levantamento.xlsx` (abas e cabeçalhos) |

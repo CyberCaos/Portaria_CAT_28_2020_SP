@@ -398,6 +398,9 @@ def levantar(pasta: str, progresso=None) -> dict:
                 alt = '; '.join(f'Anexo {a} em {_fmt(d)}' for a, d in c['alternativas'])
                 pendencia('Item em mais de um anexo', 'Conferir', pos, e, f"{'; '.join(c['flags'])}. Alternativas: {alt}",
                           'Definir o anexo (e a data de revogação) com o CEST correto do produto', unico=True)
+            elif c['status'] == 'vigente':
+                pendencia('Item que continua na ST', 'Informativo', pos, e, '; '.join(c['flags']),
+                          'Nenhuma: o produto não saiu da ST e fica fora do levantamento', unico=True)
             elif c['status'] == 'revisar_parcial_sem_cest':
                 alt = '; '.join(f'Anexo {a} em {_fmt(d)}' for a, d in c['alternativas'])
                 pendencia('Anexo parcial sem CEST', 'Conferir', pos, e, f"{'; '.join(c['flags'])}. Possível: {alt}",
